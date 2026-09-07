@@ -26,7 +26,9 @@ dependencies = [
  "solana-kite",
  "solana-signer",
  "solana-sysvar",
+ "spl-associated-token-account",
  "spl-pod",
+ "spl-token",
  "spl-token-2022-interface",
  "spl-token-metadata-interface",
 ]

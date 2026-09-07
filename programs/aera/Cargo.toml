@@ -42,6 +42,26 @@ spl-token-metadata-interface = "=0.8.0"
 spl-pod = "=0.7.3"
 
 [dev-dependencies]
+# Not used by the tests. Listed to turn `no-entrypoint` ON for both.
+#
+# anchor-spl pulls spl-token and spl-associated-token-account as full programs,
+# entrypoints included. A test binary links this crate and both of those, so
+# `entrypoint` is defined three times over. lld rejects that outright; the
+# linker on Windows resolves it silently, which is why the suite ran green on
+# one machine for months and could not link on any Linux CI runner.
+#
+# Cargo features are additive, so naming the feature here switches the
+# entrypoints off across the graph. It belongs in dev-dependencies rather than
+# dependencies: under resolver v2 these features do not reach a non-test build,
+# so `cargo build-sbf` is untouched and the deployed artifact keeps its own
+# entrypoint, which is the one thing on the chain that has to have one.
+#
+# Versions pinned to exactly what anchor-spl 1.1.2 resolves. A different version
+# here would put a second copy of each program in the graph and change nothing
+# about the entrypoint that is actually linked.
+spl-token = { version = "=9.0.0", features = ["no-entrypoint"] }
+spl-associated-token-account = { version = "=8.0.0", features = ["no-entrypoint"] }
+
 # Integration tests link separately from the crate, so the mint-parsing types
 # are listed again here. Same pinned versions, so still one copy in the graph.
 spl-token-2022-interface = "=2.1.0"
