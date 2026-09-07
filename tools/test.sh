@@ -72,11 +72,26 @@ echo
 echo "=== 4. running tests ==="
 LOG="$(mktemp)"
 trap 'rm -f "$LOG"' EXIT
+#
+# `--features no-entrypoint`, or the test binaries do not link on Linux.
+#
+# Each integration test links `libaera` as a normal rlib, and Anchor's
+# `#[program]` emits `entrypoint!` unless that feature is set. `spl-token`,
+# pulled in by anchor-spl, emits one too. Two definitions of `entrypoint` in one
+# binary: lld refuses it outright, while the linker on Windows resolves it and
+# says nothing -- which is why this suite ran green here for months and could
+# not link on any CI runner.
+#
+# It costs the tests nothing. Nothing here calls the program through the rlib:
+# the LiteSVM harness loads the compiled `.so` that step 1 just built, so the
+# entrypoint symbol is dead weight in a test binary either way. The feature is
+# not passed to `cargo build-sbf`, so the deployed artifact keeps its entrypoint
+# and is byte-for-byte what it was.
 set +e
 if [ $# -gt 0 ]; then
-  cargo test --no-fail-fast "$@" 2>&1 | tee "$LOG"
+  cargo test --no-fail-fast --features no-entrypoint "$@" 2>&1 | tee "$LOG"
 else
-  cargo test --no-fail-fast 2>&1 | tee "$LOG"
+  cargo test --no-fail-fast --features no-entrypoint 2>&1 | tee "$LOG"
 fi
 TEST_STATUS="${PIPESTATUS[0]}"
 set -e

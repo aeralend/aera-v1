@@ -53,8 +53,12 @@ if [ $# -eq 0 ]; then
   exit 0
 fi
 
+# `--features no-entrypoint` for the same reason test.sh passes it: without it
+# `libaera` and `spl-token` both define `entrypoint` and the test binary does
+# not link on Linux. Kept identical here so the fast loop and the real run build
+# the same thing.
 for suite in "$@"; do
   echo
   echo "--- $suite ---"
-  cargo test -p aera --test "$suite" 2>&1 | grep -E "^test |test result|panicked at|Error Code:" || true
+  cargo test -p aera --features no-entrypoint --test "$suite" 2>&1 | grep -E "^test |test result|panicked at|Error Code:" || true
 done
