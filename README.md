@@ -86,7 +86,9 @@ programs/aera/tests/
   test_*.rs         behaviour, migration, invariants, launch scenario
   common/           the LiteSVM harness and the invariant assertions
 
-fixtures/           named, hashed SBF artifacts the migration suite runs against
+fixtures/           aera_v0_1.so, the previously deployed program, kept so the
+                    migration suite has real v0.1 state to replay; aera_v0_2.so
+                    is a build output, not a release
 tools/              build, test and artifact scripts
 ```
 
@@ -121,6 +123,13 @@ The migration suite runs real v0.1 account state through the current program.
 It needs a v0.1 binary, and this repository ships one as a hashed fixture —
 `tools/build-artifacts.sh` verifies its hash against a known-good list before
 any test loads it.
+
+`fixtures/aera_v0_2.so` sitting beside it is **not** a release. It is the
+current program, rebuilt from source before every run, committed only because
+the test harness pulls it in with `include_bytes!` and the crate would not
+compile on a fresh clone without it. Whatever is committed there was built on
+somebody's machine and is overwritten before the first test executes. For the
+hash of the program a run actually tested, run it — step 7 prints it.
 
 ## Security
 

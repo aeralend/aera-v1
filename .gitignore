@@ -1,9 +1,24 @@
-# Anchor / cargo build output. `fixtures/` is deliberately NOT ignored: the
-# named, hashed artifacts under it are what the migration suite loads, and they
-# are committed so the suite can run in a repository that has no history from
-# before v0.2. See tools/build-artifacts.sh.
+# Anchor / cargo build output.
 target/
 .anchor/
+
+# `fixtures/` is deliberately NOT ignored. `aera_v0_1.so` is the previously
+# deployed program and the migration suite replays real v0.1 account state
+# through the current one; this repository has no history from before v0.2, so
+# it cannot be rebuilt here and has to be committed. `aera_v0_2.so` is the
+# current program, rebuilt by build-artifacts.sh before every run -- committed
+# only because tests/common/mod.rs pulls both in with `include_bytes!`, which
+# resolves at compile time, so without it `cargo clippy --all-targets` does not
+# build on a fresh clone.
+#
+# MANIFEST.txt is the exception: it is a report of one run, written by
+# build-artifacts.sh and read straight back by test.sh to print step 7. Nothing
+# reads a committed copy, and a committed copy is stale the moment anyone
+# builds -- it would sit in the repository looking like a statement of what the
+# artifacts hash to, while naming whichever machine wrote it last. The hash
+# that is actually enforced is V0_1_EXPECTED_HASHES in
+# tools/build-artifacts.sh, which is code and is committed.
+fixtures/MANIFEST.txt
 
 # Anchor writes the deploy keypair here on a local build. It is a signing key.
 **/*-keypair.json
