@@ -1,0 +1,37 @@
+name: Bug
+description: Something in the program does not behave as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **If this has security impact, stop.** Report it privately through a
+        [security advisory](https://github.com/aeralend/aera-v1/security/advisories/new)
+        instead. A public issue about an exploitable bug is a disclosure.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: The behaviour you observed, and the behaviour you expected.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: >-
+        A failing test in `programs/aera/tests/` is the most useful form. Failing
+        that, the instruction, the accounts and the state it was in.
+      render: rust
+    validations:
+      required: true
+
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: The commit you are on, so this can be reproduced against the same code.
+    validations:
+      required: true

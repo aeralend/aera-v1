@@ -1,0 +1,39 @@
+#
+#
+#
+# Minimum test count per suite.
+# Raise a floor when you add tests. Lowering one is a deliberate act that shows
+# `tools/test.sh` fails if any suite drops below its floor. The brief this was
+# pass" -- and a green run is exactly what deleting a test produces. A count
+# suite                     floor
+# that only ever goes up is the cheapest possible guard against it.
+# up in review as a lowered floor, which is the whole point.
+# written under says it plainly -- "no deleting difficult tests to make CI
+audit_accounts                6
+audit_first_depositor         6
+audit_fuzz                    6
+audit_gates                  12
+audit_liquidation             4
+audit_oracle_economics       20
+audit_raw_ix                  2
+audit_rounding                8
+lib                          47
+test_accrual                  8
+test_admin                   16
+test_adversarial             13
+test_bad_debt                 9
+test_caps                     7
+test_fuzz_deep                2
+test_half_migrated           17
+test_health                   5
+test_invariants               7
+test_launch_config            6
+test_launch_scenario          1
+test_liquidation              5
+test_math_vectors             2
+test_metadata                10
+test_migration               27
+test_oracle                  23
+test_oracle_trust            26
+test_real_pool                6
+test_wallet_borrow_cap       11

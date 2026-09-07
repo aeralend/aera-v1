@@ -1,0 +1,12 @@
+# LF in the repository, whatever the checkout does locally.
+#
+# `tools/test.sh` is the CI entry point and runs on Ubuntu. A shell script
+# committed with CRLF fails there with "bad interpreter: no such file or
+# directory" — a message that names the interpreter and not the line endings,
+# which is a long afternoon.
+* text=auto eol=lf
+
+# Named, hashed SBF artifacts. Any normalisation at all changes the hash the
+# migration suite verifies, so they are binary and stay byte-for-byte.
+*.so binary
+*.bin binary

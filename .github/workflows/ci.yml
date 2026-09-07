@@ -1,0 +1,98 @@
+name: ci
+
+# The on-chain program. Everything here runs against a real SBF build in a
+# local validator; nothing is mocked.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A second push to the same PR cancels the first. A long program suite running
+# three times over on a branch nobody is looking at is wasted runner time, and
+# the only run that matters is the last one.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: fmt and clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust toolchain
+        run: rustup component add rustfmt clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo fmt
+        run: cargo fmt --all --check
+
+      # `-D warnings` on purpose. A warning in a program that moves money is a
+      # thing somebody has decided not to look at, and there is no level of
+      # busyness at which that is the right call here.
+      - name: cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+  test:
+    name: program tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Solana platform tools
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+
+      - uses: Swatinem/rust-cache@v2
+
+      # `tools/test.sh`, not `cargo test`.
+      #
+      # `cargo test` does not rebuild the SBF artifact, so it will test a stale
+      # program and report results that look entirely real -- which is how a
+      # full v0.2 test run was once read against a five-day-old v0.1 binary.
+      # The script builds the artifact, hashes it, refuses to run if a source
+      # file is newer than the binary, refuses if any test is ignored or
+      # filtered out, and refuses if any suite has fewer tests than its recorded
+      # floor. Every one of those is a way a green run has been, or could be, a
+      # lie.
+      #
+      # The migration suite needs a v0.1 binary. This repository has no history
+      # from before v0.2, so `tools/build-artifacts.sh` uses the committed
+      # fixture and verifies its hash against a known-good list rather than
+      # rebuilding it from a commit that is not here.
+      - name: Test
+        run: ./tools/test.sh
+
+  audit-suites:
+    name: the adversarial suites ran
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # A guard against the quiet failure mode: a suite that stops being
+      # compiled, or a file that gets renamed out of the run, without anything
+      # going red. `tools/test.sh` enforces per-suite floors; this asserts the
+      # suites exist at all, which is the cheaper half of the same idea and
+      # catches a deletion in review rather than in a rerun.
+      - name: Every audit suite is present
+        run: |
+          missing=0
+          for suite in accounts first_depositor fuzz gates liquidation \
+                       oracle_economics raw_ix rounding
+          do
+            path="programs/aera/tests/audit_${suite}.rs"
+            if [ ! -f "$path" ]; then
+              echo "::error::$path is gone"
+              missing=1
+            fi
+          done
+          exit $missing

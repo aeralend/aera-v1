@@ -1,0 +1,15 @@
+[workspace]
+members = ["programs/*"]
+resolver = "2"
+
+[profile.release]
+# Every arithmetic path in the program uses checked_* math; overflow-checks means
+# any op that slipped through traps instead of wrapping.
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+
+[profile.release.build-override]
+opt-level = 3
+incremental = false
+codegen-units = 1

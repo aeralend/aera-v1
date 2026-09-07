@@ -1,0 +1,61 @@
+[package]
+name = "aera"
+version = "0.1.0"
+description = "Aera - overcollateralized COOK bank on Cookie Chain"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "aera"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+
+[dependencies]
+# init-if-needed: the obligation share vault and the per-wallet supply position
+# are created lazily on first use.
+anchor-lang = { version = "1.1.2", features = ["init-if-needed"] }
+anchor-spl = { version = "1.1.2", features = ["token_2022", "token_2022_extensions"] }
+# For the LastRestartSlot sysvar (not re-exported by anchor-lang): the oracle
+# rejects prices from before a cluster restart. Same major as the solana-sysvar
+# anchor-lang itself uses, so only one copy is compiled in.
+solana-sysvar = "3"
+# Sizing the aCOOK mint. The share mint carries MetadataPointer + TokenMetadata,
+# and TokenMetadata is variable length, so the account has to be created with
+# lamports for the final size before the metadata is written. Versions are
+# pinned to what anchor-spl 1.1.2 itself depends on, so only one copy of each
+# is compiled in.
+# Pinned to exactly what anchor-spl 1.1.2 resolves, so there is one copy of
+# each in the graph. A second copy would make `TokenMetadata` here a different
+# type from the one `token_metadata_initialize` expects, and the mismatch shows
+# up as an inscrutable trait error rather than a version complaint.
+spl-token-2022-interface = "=2.1.0"
+spl-token-metadata-interface = "=0.8.0"
+spl-pod = "=0.7.3"
+
+[dev-dependencies]
+# Integration tests link separately from the crate, so the mint-parsing types
+# are listed again here. Same pinned versions, so still one copy in the graph.
+spl-token-2022-interface = "=2.1.0"
+spl-token-metadata-interface = "=0.8.0"
+spl-pod = "=0.7.3"
+litesvm = "0.13.1"
+solana-signer = "3.0.0"
+solana-keypair = "3.0.1"
+solana-kite = "0.4.0"
+solana-account = "3.0"
+# Used only by audit_raw_ix, to compute Anchor discriminators without importing
+# the generated instruction types.
+sha2 = "0.10"
+borsh = "1.6.1"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

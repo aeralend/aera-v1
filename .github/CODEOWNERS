@@ -1,0 +1,12 @@
+# Everything in this repository moves money. Every change is reviewed.
+*                                   @ajibolahuds
+
+# The parameters the market deploys with, and the arithmetic under them.
+# Changing either changes what every open position is worth.
+/programs/aera/src/launch.rs        @ajibolahuds
+/programs/aera/src/math.rs          @ajibolahuds
+/programs/aera/src/risk.rs          @ajibolahuds
+/programs/aera/src/oracle/          @ajibolahuds
+
+# The scripts that decide whether a green test run means anything.
+/tools/                             @ajibolahuds

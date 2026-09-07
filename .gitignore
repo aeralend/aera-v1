@@ -1,0 +1,12 @@
+# Anchor / cargo build output. `fixtures/` is deliberately NOT ignored: the
+# named, hashed artifacts under it are what the migration suite loads, and they
+# are committed so the suite can run in a repository that has no history from
+# before v0.2. See tools/build-artifacts.sh.
+target/
+.anchor/
+
+# Anchor writes the deploy keypair here on a local build. It is a signing key.
+**/*-keypair.json
+
+node_modules/
+.DS_Store
