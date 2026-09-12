@@ -161,3 +161,98 @@ fn each_reserve_has_its_own_share_mint() {
     let (_env, cook, bcook) = Env::core(1_000);
     assert_ne!(cook.share_mint, bcook.share_mint);
 }
+
+// ---------------------------------------------------------------------------
+// set_share_metadata
+//
+// The URI written at `init_reserve` used to be permanent: its update authority
+// is the reserve PDA, so only this program can sign a change, and no
+// instruction did. Both deployed mints therefore named a domain Aera does not
+// own, which answers 200 with a suspended-account page -- a wallet asking aCOOK
+// what it is received HTML where JSON should be.
+//
+// These cover the two questions that matter about the instruction that fixes
+// it: does it actually rewrite the field, and can anyone but the admin reach it.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn the_admin_can_rewrite_the_share_metadata() {
+    let (mut env, cook, _) = Env::core(1_000);
+
+    let (name, symbol, before) = env.share_metadata(&cook);
+    assert_ne!(
+        before, "https://aeralend.app/acook.json",
+        "nothing to prove otherwise"
+    );
+
+    env.try_set_share_metadata(
+        &cook,
+        &env.admin.insecure_clone(),
+        &name,
+        &symbol,
+        "https://aeralend.app/acook.json",
+    )
+    .expect("the admin may rewrite metadata");
+
+    let (after_name, after_symbol, after_uri) = env.share_metadata(&cook);
+    assert_eq!(
+        after_uri, "https://aeralend.app/acook.json",
+        "the URI moved"
+    );
+    assert_eq!(after_name, name, "the name was not disturbed");
+    assert_eq!(after_symbol, symbol, "the symbol was not disturbed");
+}
+
+/// A longer URI needs a bigger mint account, and Token-2022 will not fund it.
+///
+/// The handler transfers the shortfall before it writes. Without that the CPI
+/// fails on rent exemption -- and the failure would land on exactly the change
+/// this instruction exists to make, since `aeralend.app` is longer than the
+/// `aera.io` it replaces.
+#[test]
+fn a_longer_uri_grows_the_mint_and_stays_rent_exempt() {
+    let (mut env, cook, _) = Env::core(1_000);
+
+    let long = format!("https://aeralend.app/{}.json", "a".repeat(80));
+    let (name, symbol, _) = env.share_metadata(&cook);
+    env.try_set_share_metadata(&cook, &env.admin.insecure_clone(), &name, &symbol, &long)
+        .expect("a longer URI is allowed");
+
+    let (_, _, uri) = env.share_metadata(&cook);
+    assert_eq!(uri, long, "the long URI was stored in full");
+
+    let account = env.svm.get_account(&cook.share_mint).expect("share mint");
+    let rent = env
+        .svm
+        .minimum_balance_for_rent_exemption(account.data.len());
+    assert!(
+        account.lamports >= rent,
+        "the mint must still be rent exempt: {} lamports for {} bytes, needs {}",
+        account.lamports,
+        account.data.len(),
+        rent,
+    );
+}
+
+#[test]
+fn a_stranger_cannot_rewrite_the_share_metadata() {
+    let (mut env, cook, _) = Env::core(1_000);
+    let stranger = env.create_user();
+
+    let error = env
+        .try_set_share_metadata(
+            &cook,
+            &stranger,
+            "Not Aera",
+            "SCAM",
+            "https://example.invalid/steal.json",
+        )
+        .expect_err("only the admin may rewrite metadata");
+    assert!(
+        error.contains("NotAdmin") || error.contains("2001") || error.contains("has_one"),
+        "expected an admin refusal, got: {error}"
+    );
+
+    let (_, symbol, _) = env.share_metadata(&cook);
+    assert_ne!(symbol, "SCAM", "the stranger changed nothing");
+}
