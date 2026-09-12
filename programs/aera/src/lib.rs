@@ -203,6 +203,20 @@ pub mod aera {
         instructions::handle_apply_pending_risk_config(context)
     }
 
+    /// Rewrite a share token's name, symbol and URI.
+    ///
+    /// Not timelocked, and deliberately so: these three fields decide what a
+    /// wallet draws beside a balance and nothing about what the protocol
+    /// enforces. There is no position whose value this can move. The URI is also
+    /// the one field certain to rot -- it names a host, and hosts move -- which
+    /// is why leaving it immutable was a mistake worth an upgrade to correct.
+    pub fn set_share_metadata(
+        context: Context<SetShareMetadata>,
+        metadata: ShareMetadata,
+    ) -> Result<()> {
+        instructions::handle_set_share_metadata(context, metadata)
+    }
+
     pub fn cancel_pending_params(context: Context<SetParams>) -> Result<()> {
         instructions::handle_cancel_pending_params(context)
     }

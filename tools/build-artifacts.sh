@@ -25,8 +25,19 @@ FIXTURES="$HERE/fixtures"
 MANIFEST="$FIXTURES/MANIFEST.txt"
 
 # The last commit before the v0.2 oracle work began. Anything at or before this
-# is the guardian protocol; b8115c8 is where it was removed.
-V0_1_COMMIT="734a58f"
+# is the guardian protocol.
+#
+# This was 734a58f, and that commit no longer exists. Rewriting the repository's
+# authorship gave every commit a new hash -- same trees, same content, new SHAs --
+# and this pin was left naming one from before the rewrite. It kept passing
+# locally, because the fixture it guards is gitignored and was already on the
+# machine; CI, cloning fresh, had neither the commit nor the fixture and stopped
+# with "no v0.1 artifact and no way to build one".
+#
+# c5bf24c is the same commit: identical tree 2b88e938, and the only one of the
+# two reachable from main. A pin into history has to be re-checked whenever
+# history is rewritten, which is a good reason not to rewrite it.
+V0_1_COMMIT="c5bf24c"
 
 # The hashes v0.1 is known to build to. Every migration result is a statement
 # about *this* binary, so an unrecognised hash means the migration suite is
@@ -42,12 +53,20 @@ V0_1_COMMIT="734a58f"
 # to remove the check:
 #
 #   the toolchain changed   add the hash, with the version that produced it
-#   the commit moved        stop, because 734a58f is supposed to be immutable
+#   the commit moved        stop, because the pinned commit is supposed to be
+#                           immutable
 #
 V0_1_EXPECTED_HASHES="
   2bee2d5a8cff9375525c34b0c725b70dbbb15223dcc10ebbc32fb3fba46e57d6  # rustc 1.89.0-dev (platform-tools v1.53, windows)
+  08f5d22b86ebfe4e9395317f1332ba90d5f8b3ac83d3325cf820c5b7a73fa3ce  # cargo-build-sbf 4.1.0 (ubuntu, GitHub Actions)
 "
-WORKTREE="${AERA_V0_1_WORKTREE:-/c/Temp/aera-v0_1}"
+#
+# Outside the repository, because a worktree inside it would be picked up by
+# `cargo` and by every `git status`. `/c/Temp` was the default and it is a
+# Windows path: on CI it became `/c/Temp/...` at the filesystem root and failed
+# with "could not create leading directories ... Permission denied". TMPDIR is
+# what the platform says it is.
+WORKTREE="${AERA_V0_1_WORKTREE:-${TMPDIR:-/tmp}/aera-v0_1}"
 
 # Solana's platform-tools rustc. `cargo build-sbf` passes -Zremap-cwd-prefix,
 # which the default stable toolchain rejects, and setting RUSTUP_TOOLCHAIN is

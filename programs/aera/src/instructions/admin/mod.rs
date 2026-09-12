@@ -8,6 +8,7 @@ pub mod migrate;
 pub mod pause;
 pub mod set_params;
 pub mod set_risk_config;
+pub mod set_share_metadata;
 
 pub use collect_fees::*;
 pub use init_global::*;
@@ -19,3 +20,4 @@ pub use migrate::*;
 pub use pause::*;
 pub use set_params::*;
 pub use set_risk_config::*;
+pub use set_share_metadata::*;
