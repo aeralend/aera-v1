@@ -31,7 +31,7 @@ test_launch_config            6
 test_launch_scenario          1
 test_liquidation              5
 test_math_vectors             2
-test_metadata                10
+test_metadata                13
 test_migration               27
 test_oracle                  23
 test_oracle_trust            26

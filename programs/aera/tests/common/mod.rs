@@ -913,6 +913,57 @@ impl Env {
         send(&mut self.svm, vec![instruction], &[&admin], &admin.pubkey())
     }
 
+    /// Rewrite a share mint's name, symbol and URI.
+    pub fn try_set_share_metadata(
+        &mut self,
+        handle: &ReserveHandle,
+        signer: &Keypair,
+        name: &str,
+        symbol: &str,
+        uri: &str,
+    ) -> Result<(), String> {
+        let payer = signer.insecure_clone();
+        let instruction = Instruction {
+            program_id: aera::id(),
+            accounts: aera::accounts::SetShareMetadata {
+                global: self.global,
+                admin: payer.pubkey(),
+                market: self.market,
+                reserve: handle.reserve,
+                share_mint: handle.share_mint,
+                share_token_program: spl_token_2022_interface::id(),
+                system_program: system_program::id(),
+            }
+            .to_account_metas(None),
+            data: aera::instruction::SetShareMetadata {
+                metadata: aera::instructions::ShareMetadata {
+                    name: name.to_string(),
+                    symbol: symbol.to_string(),
+                    uri: uri.to_string(),
+                },
+            }
+            .data(),
+        };
+        send(&mut self.svm, vec![instruction], &[&payer], &payer.pubkey())
+    }
+
+    /// The share mint's metadata as the chain holds it: (name, symbol, uri).
+    pub fn share_metadata(&self, handle: &ReserveHandle) -> (String, String, String) {
+        let account = self
+            .svm
+            .get_account(&handle.share_mint)
+            .expect("share mint");
+        let state = spl_token_2022_interface::extension::StateWithExtensions::<
+            spl_token_2022_interface::state::Mint,
+        >::unpack(&account.data)
+        .expect("mint unpacks");
+        let md = spl_token_2022_interface::extension::BaseStateWithExtensions::get_variable_len_extension::<
+            spl_token_metadata_interface::state::TokenMetadata,
+        >(&state)
+        .expect("token metadata");
+        (md.name, md.symbol, md.uri)
+    }
+
     /// Promote a queued loosening. Permissionless, like `apply_pending_params`.
     pub fn apply_pending_risk_config(&mut self, handle: &ReserveHandle) -> Result<(), String> {
         let payer = self.admin.insecure_clone();

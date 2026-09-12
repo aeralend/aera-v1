@@ -33,7 +33,7 @@ pub struct ShareMetadata {
 }
 
 impl ShareMetadata {
-    fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         require!(
             !self.name.is_empty() && self.name.len() <= MAX_SHARE_NAME,
             AeraError::InvalidConfig
